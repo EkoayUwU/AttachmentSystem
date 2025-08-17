@@ -8,6 +8,7 @@
 #include "Weapon_Core.h"
 #include "Weapon_Railing.h"
 #include "Camera/CameraComponent.h"
+#include "Components/TimelineComponent.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Pawn_Smith.generated.h"
@@ -30,6 +31,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Parameters")
 	TObjectPtr<UClass> SecondAttachmentClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Parameters")
+	TObjectPtr<UCurveFloat> FocusCurve;
 	//==================================================
 	// FUNCTIONS
 	//==================================================
@@ -73,6 +77,8 @@ protected:
 
 	void OnLook(const FInputActionValue& Value);
 	void OnScroll(const FInputActionValue& Value);
+
+	void OnAction(const FInputActionValue& Value);
 	
 private:
 	//==================================================
@@ -91,6 +97,8 @@ private:
 	UPROPERTY()
 	TObjectPtr<AAttachment_Base> CurrentAttachment {nullptr};
 	UPROPERTY()
+	TObjectPtr<AAttachment_Base> FocusedAttachment {nullptr};
+	UPROPERTY()
 	TObjectPtr<AWeapon_Railing> HitRailing {nullptr};
 
 	UPROPERTY()
@@ -105,6 +113,8 @@ private:
 	TObjectPtr<UInputAction> ActivateRotateAction;
 	UPROPERTY(EditDefaultsOnly, Category = "Input", meta = (AllowPrivateAccess = true))
 	TObjectPtr<UInputAction> ScrollAction;
+	UPROPERTY(EditDefaultsOnly, Category = "Input", meta = (AllowPrivateAccess = true))
+	TObjectPtr<UInputAction> ActionAction;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Input", meta = (AllowPrivateAccess = true))
 	TObjectPtr<UInputMappingContext> DefaultMappingContext {nullptr};
@@ -114,11 +124,18 @@ private:
 	bool bEnableCamRotation {false};
 
 	bool bIsSnapping{false};
-	
+
+	FVector OriginLoc{FVector::ZeroVector};
+	FVector FocusStartLoc{FVector::ZeroVector};
+	FVector FocusEndLoc{FVector::ZeroVector};
 	//==================================================
 	// FUNCTIONS
 	//==================================================
 	
+	FTimeline FocusTimeline;
+
+	UFUNCTION()
+	void UpdateFocus(const float Alpha);
 	
 };
 

@@ -13,9 +13,9 @@ class ATTACHMENTSYSTEM_API AAttachment_Base : public AActor
 	
 public:
 	UPROPERTY(EditAnywhere, Category = "Mesh")
-	TObjectPtr<UStaticMeshComponent> EmptyMesh;
-	UPROPERTY(EditAnywhere, Category = "Mesh")
-	TObjectPtr<UStaticMeshComponent> AttachmentMesh;
+	TObjectPtr<USceneComponent> SceneRootPoint = nullptr;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Mesh")
+	TObjectPtr<UStaticMeshComponent> AttachmentMesh = nullptr;
 	
 	UPROPERTY(EditAnywhere, Category = "Parameters", meta = (ToolTip = "Radius before snapping take effect"))
 	float Radius;
@@ -23,10 +23,14 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Parameters", meta = (Tooltip = "Length/2 of the base to avoid standing in air"))
 	float BaseOffset;
 
-	bool IsColliding();
+	bool IsColliding() const {return bIsColliding;}
 	
 	UPROPERTY(EditAnywhere, Category = "Parameters")
 	TObjectPtr<UMaterialInterface> DeniedMaterial;
+
+	bool bIsPlaced{false};
+
+	virtual void DoAction();
 protected:
 	AAttachment_Base();
 
@@ -35,9 +39,11 @@ protected:
 	virtual void Tick(float DeltaTime) override;
 
 	bool bIsColliding {false};
+	
 
 	UPROPERTY()
 	TObjectPtr<UMaterialInterface> SavedMaterial;
+	
 private:
 	UFUNCTION()
 	virtual void OnMeshBeginOverlap(UPrimitiveComponent* OverlappedComponent,
@@ -52,5 +58,5 @@ private:
 
 
 	// Array of colliding Objects
-	TArray<TObjectPtr<AActor>> CollidingActors;
+	TArray<TObjectPtr<UPrimitiveComponent>> CollidingActors;
 };

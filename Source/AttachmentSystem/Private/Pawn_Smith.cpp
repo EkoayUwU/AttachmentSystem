@@ -45,12 +45,23 @@ void APawn_Smith::BeginPlay()
 
 	// Spawn First Attachment (Magni)
 	CurrentAttachment = GetWorld()->SpawnActor<AAttachment_Base>(FirstAttachmentClass);
+
+	// Initialize Timeline
+	FOnTimelineFloat UpdateFocusEvent;
+	UpdateFocusEvent.BindUFunction(this, FName("UpdateFocus"));
+
+	FocusTimeline.AddInterpFloat(FocusCurve, UpdateFocusEvent);
+	
+	OriginLoc = this->GetActorLocation();
 }
 
 
 void APawn_Smith::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	// Set Timeline Tick
+	FocusTimeline.TickTimeline(DeltaTime);
 
 	// Gather Mouse Position in Local & World Space
 	float NewX;
@@ -79,6 +90,8 @@ void APawn_Smith::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &APawn_Smith::OnLook);
 
 		EnhancedInputComponent->BindAction(ScrollAction, ETriggerEvent::Triggered, this, &APawn_Smith::OnScroll);
+
+		EnhancedInputComponent->BindAction(ActionAction, ETriggerEvent::Started, this, &APawn_Smith::OnAction);
 	}
 
 }
@@ -93,11 +106,11 @@ void APawn_Smith::CheckForSnapping()
 	const FVector StartLoc = Camera->GetComponentLocation();
 	
 	//GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red, StartLoc.ToString());
-	ValidMousePos = WorldSpaceMouseDirection + (WorldSpaceMouseDirection * SpringArm->TargetArmLength * 2.f) + StartLoc;
+	ValidMousePos = WorldSpaceMouseLocation + (WorldSpaceMouseDirection * SpringArm->TargetArmLength * 2.f);
 	//GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Green, ValidMousePos.ToString());
 
 	// Line trace to check possible collision with railings
-	UKismetSystemLibrary::SphereTraceSingle(GetWorld(), StartLoc, ValidMousePos, CurrentAttachment->Radius, TraceTypeQuery3,false, ActorsToIgnore,
+	UKismetSystemLibrary::SphereTraceSingle(GetWorld(), StartLoc, ValidMousePos, CurrentAttachment->Radius, TraceTypeQuery4,false, ActorsToIgnore,
 		EDrawDebugTrace::None, HitResult, true);
 
 	// Check if Hit is Detected
@@ -187,12 +200,13 @@ void APawn_Smith::OnInteract(const FInputActionValue& Value)
 	
 	//GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString("Clicked"));
 	
-	if (CurrentAttachment && bIsSnapping)
+	if (CurrentAttachment && bIsSnapping && !CurrentAttachment->IsColliding())
 	{
 		// Spawn New Actor to attach it to Railing
-		TObjectPtr<AAttachment_Base> tempNewAttachment = GetWorld()->SpawnActor<AAttachment_Base>(CurrentAttachment->GetClass());
+		const TObjectPtr<AAttachment_Base> tempNewAttachment = GetWorld()->SpawnActor<AAttachment_Base>(CurrentAttachment->GetClass());
 		tempNewAttachment->SetActorLocationAndRotation(AttachmentLocation, AttachmentRotation);
 		tempNewAttachment->AttachToComponent(HitRailing->RailMesh, FAttachmentTransformRules::KeepWorldTransform);
+		tempNewAttachment->bIsPlaced = true;
 
 		// Delete Unused Reference
 		CurrentAttachment->Destroy();
@@ -207,6 +221,39 @@ void APawn_Smith::OnInteract(const FInputActionValue& Value)
 			CurrentAttachment = GetWorld()->SpawnActor<AAttachment_Base>(SecondAttachmentClass);
 		}
 	}
+	else if (!CurrentAttachment)
+	{
+		// Check for an attachment to focus
+		FHitResult HitResult;
+		TArray<TObjectPtr<AActor>> ActorsToIgnore;
+		ActorsToIgnore.Add(this);
+
+		const FVector StartLoc = Camera->GetComponentLocation();
+	
+		ValidMousePos = WorldSpaceMouseLocation + (WorldSpaceMouseDirection * SpringArm->TargetArmLength * 2.f);
+
+		// Line trace to check possible collision with Attachment
+		UKismetSystemLibrary::LineTraceSingle(GetWorld(), StartLoc, ValidMousePos, TraceTypeQuery3,false, ActorsToIgnore,
+			EDrawDebugTrace::ForDuration, HitResult, true);
+
+		// Check for Hit Result, then move camera to hit attachment, return to origin otherwise
+		if (HitResult.bBlockingHit)
+		{
+			if (FocusedAttachment = Cast<AAttachment_Base>(HitResult.GetActor()))
+			{
+				FocusStartLoc = this->GetActorLocation();
+				FocusEndLoc = FocusedAttachment->GetActorLocation();
+				FocusTimeline.PlayFromStart();
+			}
+			else
+			{
+				FocusStartLoc = this->GetActorLocation();
+				FocusEndLoc = OriginLoc;
+				FocusTimeline.PlayFromStart();
+			}
+		}
+		
+	}
 	
 	
 }
@@ -214,29 +261,29 @@ void APawn_Smith::OnInteract(const FInputActionValue& Value)
 void APawn_Smith::OnPressedCamRotation(const FInputActionValue& Value)
 {
 	bEnableCamRotation = true;
-	//GEngine->AddOnScreenDebugMessage(-1, 2.5f, FColor::Blue, "True");
+
 }
 
 void APawn_Smith::OnReleasedCamRotation(const FInputActionValue& Value)
 {
 	bEnableCamRotation = false;
-	//GEngine->AddOnScreenDebugMessage(-1, 2.5f, FColor::Blue, "False");
+
 }
 
+// Move Camera around Origin
 void APawn_Smith::OnLook(const FInputActionValue& Value)
 {
 	if(bEnableCamRotation)
 	{
 		const FVector2D LookVector = Value.Get<FVector2D>();
-		// AddControllerYawInput(LookVector.X);
-		// AddControllerPitchInput(LookVector.Y);
 
 		this->AddActorLocalRotation(FRotator(0.f, LookVector.X , 0.f));
 
-		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FRotator(LookVector.Y * 100, LookVector.X * 100, 0.f).ToString());
+		//GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FRotator(LookVector.Y * 100, LookVector.X * 100, 0.f).ToString());
 	}
 }
 
+// Change Camera Arm Length
 void APawn_Smith::OnScroll(const FInputActionValue& Value)
 {
 	float input = Value.Get<float>() * 5.f;
@@ -249,4 +296,18 @@ void APawn_Smith::OnScroll(const FInputActionValue& Value)
 	
 	SpringArm->TargetArmLength = FMath::Clamp(NewArmLength, 200.f, 500.f);
 }
+
+void APawn_Smith::OnAction(const FInputActionValue& Value)
+{
+	if (FocusedAttachment)
+	{
+		FocusedAttachment->DoAction();
+	}
+}
 #pragma endregion
+
+// Timeline Update
+void APawn_Smith::UpdateFocus(const float Alpha)
+{
+	this->SetActorLocation(FMath::Lerp(FocusStartLoc, FocusEndLoc, Alpha));
+}
