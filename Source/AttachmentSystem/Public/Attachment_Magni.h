@@ -25,8 +25,13 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Mesh")
 	TObjectPtr<USceneCaptureComponent2D> RenderTarget2D = nullptr;
 
-	UPROPERTY(EditAnywhere, Category = "Mesh")
+	UPROPERTY(EditAnywhere, Category = "Parameters")
 	TObjectPtr<UCurveFloat> MovementCurve;
+
+	UPROPERTY(EditAnywhere, Category = "Parameters")
+	FRotator OriginalRotation {FRotator::ZeroRotator};
+	UPROPERTY(EditAnywhere, Category = "Parameters")
+	FRotator FinalRotation {FRotator::ZeroRotator};
 
 	
 	

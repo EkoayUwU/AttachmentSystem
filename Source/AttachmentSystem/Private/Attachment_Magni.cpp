@@ -63,7 +63,7 @@ void AAttachment_Magni::DoAction()
 
 void AAttachment_Magni::UpdateMagniMovement(const float Alpha)
 {
-	Mesh->SetRelativeRotation(FMath::Lerp(FRotator(-40.f,0.f,0.f), FRotator(40.f,0.f,0.f), Alpha));
+	Mesh->SetRelativeRotation(FMath::Lerp(OriginalRotation, FinalRotation, Alpha));
 }
 
 // Function Bound to parent delegate

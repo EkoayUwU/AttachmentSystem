@@ -14,6 +14,10 @@ AAttachment_Base::AAttachment_Base()
 	SceneRootPoint = CreateDefaultSubobject<USceneComponent>(TEXT("SceneRootPoint"));
 	RootComponent = SceneRootPoint;
 	//
+	RailCollision = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RailCollision"));
+	RailCollision->SetupAttachment(SceneRootPoint);
+	RailCollision->bHiddenInGame = true;
+	
 	// Mesh with collision testing
 	AttachmentMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("AttachmentMesh"));
 	AttachmentMesh->SetupAttachment(SceneRootPoint);
@@ -27,12 +31,19 @@ void AAttachment_Base::BeginPlay()
 
 	SavedMaterial = AttachmentMesh->GetMaterial(0);
 	
+	if(RailCollision)
+	{
+		RailCollision->OnComponentBeginOverlap.AddDynamic(this, &AAttachment_Base::OnCollRailBeginOverlap);
+		RailCollision->OnComponentEndOverlap.AddDynamic(this, &AAttachment_Base::OnCollRailEndOverlap);
+	}
+	
 	// Delegate handling collision
 	if (AttachmentMesh)
 	{
 		AttachmentMesh->OnComponentBeginOverlap.AddDynamic(this, &AAttachment_Base::OnMeshBeginOverlap);
 		AttachmentMesh->OnComponentEndOverlap.AddDynamic(this, &AAttachment_Base::OnMeshEndOverlap);
 	}
+	
 }
 
 void AAttachment_Base::Tick(float DeltaTime)
@@ -47,8 +58,42 @@ void AAttachment_Base::Tick(float DeltaTime)
 	// }
 }
 
+void AAttachment_Base::OnCollRailBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (!bIsPlaced)
+	{
+		if (OtherActor != this)
+		{
+			bIsColliding = true;
+
+			CollidingRails.AddUnique(OtherActor);
+
+			if(CollidingRails.Num() == 1)
+			{
+				ToggleDeniedMat(true);
+			}
+		}
+	}
+}
+
+void AAttachment_Base::OnCollRailEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if (OtherActor != this)
+	{
+		CollidingRails.Remove(OtherActor);
+
+		if (CollidingRails.Num() == 0 && CollidingActors.Num() == 0)
+		{
+			ToggleDeniedMat(false);
+			bIsColliding = false;
+		}
+	}
+}
+
 void AAttachment_Base::OnMeshBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
-	bool bFromSweep, const FHitResult& SweepResult)
+                                          bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (!bIsPlaced)
 	{
@@ -74,7 +119,7 @@ void AAttachment_Base::OnMeshEndOverlap(UPrimitiveComponent* OverlappedComponent
 	{
 		CollidingActors.Remove(OtherComp);
 
-		if (CollidingActors.Num() == 0)
+		if (CollidingActors.Num() == 0 && CollidingRails.Num() == 0)
 		{
 			ToggleDeniedMat(false);
 			bIsColliding = false;

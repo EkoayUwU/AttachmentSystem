@@ -21,6 +21,8 @@ public:
 	
 	UPROPERTY(EditAnywhere, Category = "Mesh")
 	TObjectPtr<USceneComponent> SceneRootPoint = nullptr;
+	UPROPERTY(EditAnywhere, Category = "Mesh")
+	TObjectPtr<UStaticMeshComponent> RailCollision = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Mesh")
 	TObjectPtr<UStaticMeshComponent> AttachmentMesh = nullptr;
 
@@ -75,6 +77,17 @@ protected:
 	
 private:
 	UFUNCTION()
+	virtual void OnCollRailBeginOverlap(UPrimitiveComponent* OverlappedComponent,
+									AActor* OtherActor, UPrimitiveComponent* OtherComp,
+									int32 OtherBodyIndex, bool bFromSweep,
+									const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void OnCollRailEndOverlap(UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor, UPrimitiveComponent* OtherComp, 
+		int32 OtherBodyIndex);
+	
+	UFUNCTION()
 	virtual void OnMeshBeginOverlap(UPrimitiveComponent* OverlappedComponent,
 	                                AActor* OtherActor, UPrimitiveComponent* OtherComp,
 	                                int32 OtherBodyIndex, bool bFromSweep,
@@ -86,6 +99,9 @@ private:
 		int32 OtherBodyIndex);
 
 
+	// Array of colliding railings
+	TArray<TObjectPtr<AActor>> CollidingRails;
+	
 	// Array of colliding Objects
 	TArray<TObjectPtr<UPrimitiveComponent>> CollidingActors;
 };
