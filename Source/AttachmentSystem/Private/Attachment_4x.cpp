@@ -18,7 +18,7 @@ void AAttachment_4x::BeginPlay()
 
 	DotMaterial = AttachmentMesh->CreateDynamicMaterialInstance(1);
 
-	RenderTarget2D->TextureTarget = UKismetRenderingLibrary::CreateRenderTarget2D(GetWorld());
+	RenderTarget2D->TextureTarget = UKismetRenderingLibrary::CreateRenderTarget2D(GetWorld(), 512, 512);
 	DotMaterial->SetTextureParameterValue(FName("RenderTarget"), RenderTarget2D->TextureTarget);
 }
 

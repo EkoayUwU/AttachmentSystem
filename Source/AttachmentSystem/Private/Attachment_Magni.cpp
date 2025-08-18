@@ -25,8 +25,11 @@ void AAttachment_Magni::BeginPlay()
 
 	MagniMovement.AddInterpFloat(MovementCurve, UpdateMovement);
 	//
-	
 
+	MagniMaterial = Mesh->CreateDynamicMaterialInstance(1);
+	
+	RenderTarget2D->TextureTarget = UKismetRenderingLibrary::CreateRenderTarget2D(GetWorld(), 512, 512);
+	MagniMaterial->SetTextureParameterValue(FName("RenderTarget"), RenderTarget2D->TextureTarget);
 	
 }
 

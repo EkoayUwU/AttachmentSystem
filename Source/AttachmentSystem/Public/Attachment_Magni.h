@@ -32,6 +32,11 @@ public:
 	
 protected:
 	//==================================================
+	// PROPERTIES & VARIABLES
+	//==================================================
+	UPROPERTY()
+	TObjectPtr<UMaterialInstanceDynamic> MagniMaterial {nullptr};
+	//==================================================
 	// FUNCTIONS
 	//==================================================
 	AAttachment_Magni();
