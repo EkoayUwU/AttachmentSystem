@@ -116,6 +116,8 @@ void APawn_Smith::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 		EnhancedInputComponent->BindAction(ScrollAction, ETriggerEvent::Triggered, this, &APawn_Smith::OnScroll);
 
 		EnhancedInputComponent->BindAction(ActionAction, ETriggerEvent::Started, this, &APawn_Smith::OnAction);
+
+		EnhancedInputComponent->BindAction(MirrorAttachmentAction, ETriggerEvent::Started, this, &APawn_Smith::OnMirrorAttachment);
 	}
 
 }
@@ -135,7 +137,7 @@ void APawn_Smith::CheckForSnapping()
 
 	// Line trace to check possible collision with railings
 	UKismetSystemLibrary::SphereTraceSingle(GetWorld(), StartLoc, ValidMousePos, CurrentAttachment->Radius, TraceTypeQuery4,false, ActorsToIgnore,
-		EDrawDebugTrace::None, HitResult, true);
+		EDrawDebugTrace::ForOneFrame, HitResult, true);
 
 	// Check if Hit is Detected
 	if (HitResult.bBlockingHit)
@@ -161,8 +163,8 @@ void APawn_Smith::CursorSnapping()
 {
 	// Init variables
 	FVector NewAttachmentLoc = HitRailing->StartPoint->GetComponentLocation();
-	const float StartY = HitRailing->StartPoint->GetComponentLocation().Y;
-	const float EndY = HitRailing->EndPoint->GetComponentLocation().Y;
+	const float StartY = HitRailing->StartPoint->GetComponentLocation().Y < HitRailing->EndPoint->GetComponentLocation().Y ? HitRailing->StartPoint->GetComponentLocation().Y : HitRailing->EndPoint->GetComponentLocation().Y;
+	const float EndY = HitRailing->StartPoint->GetComponentLocation().Y < HitRailing->EndPoint->GetComponentLocation().Y ? HitRailing->EndPoint->GetComponentLocation().Y : HitRailing->StartPoint->GetComponentLocation().Y;
 	//
 
 	// Create Step Movement
@@ -173,13 +175,6 @@ void APawn_Smith::CursorSnapping()
 
 	// Get World Value between Rail's Points
 	NewAttachmentLoc.Y = FMath::Lerp(StartY, EndY, tempY);
-
-	// // Get Mesh Size
-	// FVector MeshOffsetMin;
-	// FVector MeshOffsetMax;
-	// CurrentAttachment->AttachmentMesh->GetLocalBounds(MeshOffsetMin, MeshOffsetMax);
-	// const float MeshLength = 0.f; //MeshOffsetMax.Y - MeshOffsetMin.Y;
-	// //
 	
 	NewAttachmentLoc.Y -= 2.5f;
 	// Apply Final Location
@@ -229,7 +224,9 @@ void APawn_Smith::OnInteract(const FInputActionValue& Value)
 		// Spawn New Actor to attach it to Railing
 		const TObjectPtr<AAttachment_Base> tempNewAttachment = GetWorld()->SpawnActor<AAttachment_Base>(CurrentAttachment->GetClass());
 		tempNewAttachment->SetActorLocationAndRotation(AttachmentLocation, AttachmentRotation);
+		tempNewAttachment->SetActorScale3D(CurrentAttachment->GetActorScale3D());
 		tempNewAttachment->AttachToComponent(HitRailing->RailMesh, FAttachmentTransformRules::KeepWorldTransform);
+		tempNewAttachment->OnPlacedEvent();
 		tempNewAttachment->bIsPlaced = true;
 
 		// Delete Unused Reference
@@ -326,6 +323,15 @@ void APawn_Smith::OnAction(const FInputActionValue& Value)
 	if (FocusedAttachment)
 	{
 		FocusedAttachment->DoAction();
+	}
+}
+
+void APawn_Smith::OnMirrorAttachment(const FInputActionValue& Value)
+{
+	if (CurrentAttachment)
+	{
+		const FVector CurrentAttachmentScale = CurrentAttachment->GetActorScale3D();
+		CurrentAttachment->SetActorScale3D(FVector(CurrentAttachmentScale.X * -1.f, CurrentAttachmentScale.Y, CurrentAttachmentScale.Z));
 	}
 }
 #pragma endregion

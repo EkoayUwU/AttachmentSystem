@@ -20,10 +20,10 @@ public:
 	// PROPERTIES & VARIABLES
 	//==================================================
 	UPROPERTY(EditAnywhere, Category = "Mesh")
-	TObjectPtr<UStaticMeshComponent> Mesh;
+	TObjectPtr<UStaticMeshComponent> Mesh {nullptr};
 	
 	UPROPERTY(EditAnywhere, Category = "Mesh")
-	TObjectPtr<USceneCaptureComponent2D> RenderTarget2D = nullptr;
+	TObjectPtr<USceneCaptureComponent2D> RenderTarget2D {nullptr};
 
 	UPROPERTY(EditAnywhere, Category = "Parameters")
 	TObjectPtr<UCurveFloat> MovementCurve;
@@ -43,6 +43,7 @@ protected:
 	TObjectPtr<UMaterialInstanceDynamic> MagniBodyMaterial {nullptr};
 	UPROPERTY()
 	TObjectPtr<UMaterialInstanceDynamic> MagniLensMaterial {nullptr};
+	
 	//==================================================
 	// FUNCTIONS
 	//==================================================

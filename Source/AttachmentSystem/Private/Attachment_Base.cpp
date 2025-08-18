@@ -138,3 +138,7 @@ void AAttachment_Base::ToggleDeniedMat(const bool bActivate)
 
 	OnMaterialChanged.ExecuteIfBound(bActivate);
 }
+
+void AAttachment_Base::OnPlacedEvent()
+{
+}

@@ -80,6 +80,8 @@ protected:
 
 	void OnAction(const FInputActionValue& Value);
 	
+	void OnMirrorAttachment(const FInputActionValue& Value);
+	
 private:
 	//==================================================
 	// PROPERTIES & VARIABLES
@@ -115,6 +117,8 @@ private:
 	TObjectPtr<UInputAction> ScrollAction;
 	UPROPERTY(EditDefaultsOnly, Category = "Input", meta = (AllowPrivateAccess = true))
 	TObjectPtr<UInputAction> ActionAction;
+	UPROPERTY(EditDefaultsOnly, Category = "Input", meta = (AllowPrivateAccess = true))
+	TObjectPtr<UInputAction> MirrorAttachmentAction;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Input", meta = (AllowPrivateAccess = true))
 	TObjectPtr<UInputMappingContext> DefaultMappingContext {nullptr};
