@@ -35,7 +35,9 @@ protected:
 	// PROPERTIES & VARIABLES
 	//==================================================
 	UPROPERTY()
-	TObjectPtr<UMaterialInstanceDynamic> MagniMaterial {nullptr};
+	TObjectPtr<UMaterialInstanceDynamic> MagniBodyMaterial {nullptr};
+	UPROPERTY()
+	TObjectPtr<UMaterialInstanceDynamic> MagniLensMaterial {nullptr};
 	//==================================================
 	// FUNCTIONS
 	//==================================================
@@ -60,5 +62,5 @@ private:
 	void UpdateMagniMovement(const float Alpha);
 
 	
-	
+	void SetMagniMat(const bool bActivate);
 };

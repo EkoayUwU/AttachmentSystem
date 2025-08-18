@@ -26,10 +26,13 @@ void AAttachment_Magni::BeginPlay()
 	MagniMovement.AddInterpFloat(MovementCurve, UpdateMovement);
 	//
 
-	MagniMaterial = Mesh->CreateDynamicMaterialInstance(1);
+	MagniBodyMaterial = Mesh->CreateDynamicMaterialInstance(0);
+	MagniLensMaterial = Mesh->CreateDynamicMaterialInstance(1);
 	
 	RenderTarget2D->TextureTarget = UKismetRenderingLibrary::CreateRenderTarget2D(GetWorld(), 512, 512);
-	MagniMaterial->SetTextureParameterValue(FName("RenderTarget"), RenderTarget2D->TextureTarget);
+	MagniLensMaterial->SetTextureParameterValue(FName("RenderTarget"), RenderTarget2D->TextureTarget);
+
+	OnMaterialChanged.BindUObject(this, &AAttachment_Magni::SetMagniMat);
 	
 }
 
@@ -61,5 +64,11 @@ void AAttachment_Magni::DoAction()
 void AAttachment_Magni::UpdateMagniMovement(const float Alpha)
 {
 	Mesh->SetRelativeRotation(FMath::Lerp(FRotator(-40.f,0.f,0.f), FRotator(40.f,0.f,0.f), Alpha));
+}
+
+// Function Bound to parent delegate
+void AAttachment_Magni::SetMagniMat(const bool bActivate)
+{
+	bActivate ? Mesh->SetMaterial(0, DeniedMaterial) : Mesh->SetMaterial(0, MagniBodyMaterial);
 }
 

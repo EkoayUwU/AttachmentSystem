@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "GameFramework/Actor.h"
 #include "Weapon_Railing.generated.h"
 
@@ -12,9 +13,9 @@ class ATTACHMENTSYSTEM_API AWeapon_Railing : public AActor
 	GENERATED_BODY()
 	
 public:	
-
-	AWeapon_Railing();
-
+	//==================================================
+	// PROPERTIES & VARIABLES
+	//==================================================
 	UPROPERTY(EditAnywhere, Category = "Mesh", meta = (AllowPrivateAccess = true))
 	TObjectPtr<UStaticMeshComponent> RailMesh;
 
@@ -23,8 +24,14 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Mesh", meta = (AllowPrivateAccess = true))
 	TObjectPtr<USceneComponent> EndPoint;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parameters")
+	FGameplayTagContainer RailingTags;
+
+	
 protected:
-	// Called when the game starts or when spawned
+
+	AWeapon_Railing();
+	
 	virtual void BeginPlay() override;
 
 

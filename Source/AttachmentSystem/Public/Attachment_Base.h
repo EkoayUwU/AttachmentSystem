@@ -3,8 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "GameFramework/Actor.h"
 #include "Attachment_Base.generated.h"
+
+DECLARE_DELEGATE_OneParam(FOnMaterialChanged, const bool /* bActivate */)
 
 UCLASS()
 class ATTACHMENTSYSTEM_API AAttachment_Base : public AActor
@@ -12,10 +15,17 @@ class ATTACHMENTSYSTEM_API AAttachment_Base : public AActor
 	GENERATED_BODY()
 	
 public:
+	//==================================================
+	// PROPERTIES & VARIABLES
+	//==================================================
+	
 	UPROPERTY(EditAnywhere, Category = "Mesh")
 	TObjectPtr<USceneComponent> SceneRootPoint = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Mesh")
 	TObjectPtr<UStaticMeshComponent> AttachmentMesh = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Parameters")
+	FGameplayTagContainer AttachmentTags;
 	
 	UPROPERTY(EditAnywhere, Category = "Parameters", meta = (ToolTip = "Radius before snapping take effect"))
 	float Radius;
@@ -23,26 +33,45 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Parameters", meta = (Tooltip = "Length/2 of the base to avoid standing in air"))
 	float BaseOffset;
 
-	bool IsColliding() const {return bIsColliding;}
-	
+	UPROPERTY(EditAnywhere, Category = "Parameters", meta = (Tooltip = "Length/2 of the base to avoid standing in air"))
+	FVector CamPositionOffset;
+
 	UPROPERTY(EditAnywhere, Category = "Parameters")
 	TObjectPtr<UMaterialInterface> DeniedMaterial;
 
+	UPROPERTY()
 	bool bIsPlaced{false};
-
+	//==================================================
+	// FUNCTIONS
+	//==================================================
+	bool IsColliding() const {return bIsColliding;}
+	
 	virtual void DoAction();
+
+	void ToggleDeniedMat(const bool bActivate);
 protected:
+	//==================================================
+	// PROPERTIES & VARIABLES
+	//==================================================
+	UPROPERTY()
+	TObjectPtr<UMaterialInterface> SavedMaterial;
+
+	bool bIsColliding {false};
+
+
+	FOnMaterialChanged OnMaterialChanged;
+	
+	//==================================================
+	// FUNCTIONS
+	//==================================================
 	AAttachment_Base();
 
 	virtual void BeginPlay() override;
 
 	virtual void Tick(float DeltaTime) override;
 
-	bool bIsColliding {false};
-	
 
-	UPROPERTY()
-	TObjectPtr<UMaterialInterface> SavedMaterial;
+
 	
 private:
 	UFUNCTION()

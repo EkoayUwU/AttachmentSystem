@@ -73,6 +73,30 @@ void APawn_Smith::Tick(float DeltaTime)
 
 	if (CurrentAttachment) CheckForSnapping();
 
+	// Check for matching railings tags to place Attachment, if not matching, set Attachment materials to denied
+	if (HitRailing && bIsSnapping && CurrentAttachment && !CurrentAttachment->IsColliding())
+	{
+		for (FGameplayTag Tag : CurrentAttachment->AttachmentTags)
+		{
+			if (HitRailing->RailingTags.HasTag(Tag))
+			{
+				bCanAttachmentBePlaced = true;
+				CurrentAttachment->ToggleDeniedMat(false);
+
+				break;
+			}
+			
+			bCanAttachmentBePlaced = false;
+			CurrentAttachment->ToggleDeniedMat(true);
+			bDoOnceMatAttachment = false;
+		}
+	}
+	else if (bDoOnceMatAttachment && !CurrentAttachment->IsColliding())
+	{
+		CurrentAttachment->ToggleDeniedMat(false);
+		bDoOnceMatAttachment = false;
+	}
+
 }
 
 
@@ -200,7 +224,7 @@ void APawn_Smith::OnInteract(const FInputActionValue& Value)
 	
 	//GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString("Clicked"));
 	
-	if (CurrentAttachment && bIsSnapping && !CurrentAttachment->IsColliding())
+	if (CurrentAttachment && bCanAttachmentBePlaced && bIsSnapping && !CurrentAttachment->IsColliding())
 	{
 		// Spawn New Actor to attach it to Railing
 		const TObjectPtr<AAttachment_Base> tempNewAttachment = GetWorld()->SpawnActor<AAttachment_Base>(CurrentAttachment->GetClass());
@@ -234,7 +258,7 @@ void APawn_Smith::OnInteract(const FInputActionValue& Value)
 
 		// Line trace to check possible collision with Attachment
 		UKismetSystemLibrary::LineTraceSingle(GetWorld(), StartLoc, ValidMousePos, TraceTypeQuery3,false, ActorsToIgnore,
-			EDrawDebugTrace::ForDuration, HitResult, true);
+			EDrawDebugTrace::None, HitResult, true);
 
 		// Check for Hit Result, then move camera to hit attachment, return to origin otherwise
 		if (HitResult.bBlockingHit)
@@ -242,7 +266,7 @@ void APawn_Smith::OnInteract(const FInputActionValue& Value)
 			if (FocusedAttachment = Cast<AAttachment_Base>(HitResult.GetActor()))
 			{
 				FocusStartLoc = this->GetActorLocation();
-				FocusEndLoc = FocusedAttachment->GetActorLocation();
+				FocusEndLoc = FocusedAttachment->GetActorLocation() + FocusedAttachment->CamPositionOffset;
 				FocusTimeline.PlayFromStart();
 			}
 			else

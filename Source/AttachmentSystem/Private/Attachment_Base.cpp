@@ -60,7 +60,7 @@ void AAttachment_Base::OnMeshBeginOverlap(UPrimitiveComponent* OverlappedCompone
 
 			if(CollidingActors.Num() == 1)
 			{
-				AttachmentMesh->SetMaterial(0, DeniedMaterial);
+				ToggleDeniedMat(true);
 			}
 		}
 	}
@@ -76,7 +76,7 @@ void AAttachment_Base::OnMeshEndOverlap(UPrimitiveComponent* OverlappedComponent
 
 		if (CollidingActors.Num() == 0)
 		{
-			AttachmentMesh->SetMaterial(0, SavedMaterial);
+			ToggleDeniedMat(false);
 			bIsColliding = false;
 		}
 	}
@@ -85,4 +85,11 @@ void AAttachment_Base::OnMeshEndOverlap(UPrimitiveComponent* OverlappedComponent
 
 void AAttachment_Base::DoAction()
 {
+}
+
+void AAttachment_Base::ToggleDeniedMat(const bool bActivate)
+{
+	bActivate ? AttachmentMesh->SetMaterial(0, DeniedMaterial) : AttachmentMesh->SetMaterial(0, SavedMaterial);
+
+	OnMaterialChanged.ExecuteIfBound(bActivate);
 }

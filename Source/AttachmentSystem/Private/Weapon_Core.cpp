@@ -11,12 +11,6 @@ AWeapon_Core::AWeapon_Core()
 	
 }
 
-// Called when the game starts or when spawned
-void AWeapon_Core::BeginPlay()
-{
-	Super::BeginPlay();
-	
-}
 
 
 

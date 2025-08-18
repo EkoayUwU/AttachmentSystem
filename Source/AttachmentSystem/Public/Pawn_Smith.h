@@ -128,6 +128,9 @@ private:
 	FVector OriginLoc{FVector::ZeroVector};
 	FVector FocusStartLoc{FVector::ZeroVector};
 	FVector FocusEndLoc{FVector::ZeroVector};
+
+	bool bCanAttachmentBePlaced {false};
+	bool bDoOnceMatAttachment {false};
 	//==================================================
 	// FUNCTIONS
 	//==================================================
