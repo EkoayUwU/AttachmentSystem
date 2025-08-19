@@ -54,6 +54,7 @@ public:
 	void ToggleDeniedMat(const bool bActivate);
 
 	virtual void OnPlacedEvent();
+	
 protected:
 	//==================================================
 	// PROPERTIES & VARIABLES

@@ -135,6 +135,7 @@ private:
 
 	bool bCanAttachmentBePlaced {false};
 	bool bDoOnceMatAttachment {false};
+	
 	//==================================================
 	// FUNCTIONS
 	//==================================================
@@ -143,6 +144,8 @@ private:
 
 	UFUNCTION()
 	void UpdateFocus(const float Alpha);
+
+	
 	
 };
 

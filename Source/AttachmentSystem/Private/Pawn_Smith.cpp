@@ -64,11 +64,9 @@ void APawn_Smith::Tick(float DeltaTime)
 	FocusTimeline.TickTimeline(DeltaTime);
 
 	// Gather Mouse Position in Local & World Space
-	float NewX;
-	float NewY;
-	PlayerController->GetMousePosition(NewX, NewY);
-	LocalMouseLocation = FVector2D(NewX, NewY);
 
+	PlayerController->GetMousePosition(LocalMouseLocation.X, LocalMouseLocation.Y);
+	
 	PlayerController->DeprojectMousePositionToWorld(WorldSpaceMouseLocation, WorldSpaceMouseDirection);
 
 	if (CurrentAttachment) CheckForSnapping();
@@ -76,6 +74,10 @@ void APawn_Smith::Tick(float DeltaTime)
 	// Check for matching railings tags to place Attachment, if not matching, set Attachment materials to denied
 	if (HitRailing && bIsSnapping && CurrentAttachment && !CurrentAttachment->IsCollidingAttachment() && !CurrentAttachment->IsCollidingRailing())
 	{
+		bCanAttachmentBePlaced = false;
+		CurrentAttachment->ToggleDeniedMat(true);
+		bDoOnceMatAttachment = false;
+		
 		for (FGameplayTag Tag : CurrentAttachment->AttachmentTags)
 		{
 			if (HitRailing->RailingTags.HasTag(Tag))
@@ -86,9 +88,6 @@ void APawn_Smith::Tick(float DeltaTime)
 				break;
 			}
 			
-			bCanAttachmentBePlaced = false;
-			CurrentAttachment->ToggleDeniedMat(true);
-			bDoOnceMatAttachment = false;
 		}
 	}
 	else if (bDoOnceMatAttachment && !CurrentAttachment->IsCollidingAttachment() && !CurrentAttachment->IsCollidingRailing())
@@ -108,7 +107,7 @@ void APawn_Smith::Tick(float DeltaTime)
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Green, TEXT("Not Colliding Railing"));
 		}
-
+	
 		if (CurrentAttachment->IsCollidingAttachment())
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red, TEXT("Colliding Attachment"));
@@ -164,12 +163,47 @@ void APawn_Smith::CheckForSnapping()
 	if (HitResult.bBlockingHit)
 	{
 		//GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Cyan, FString("HitObject : %s").Append(*HitResult.GetActor()->GetName()));
-		// Get Hitted Railing
-		if (HitRailing = Cast<AWeapon_Railing>(HitResult.GetActor()))
+		if (!CurrentAttachment->IsCollidingRailing())	
 		{
-			SnappingMousePos = HitResult.Location;
-			bIsSnapping = true;
-			CursorSnapping();
+			// Get Hit Railing
+			if (HitRailing = Cast<AWeapon_Railing>(HitResult.GetActor()))
+			{
+				SnappingMousePos = HitResult.Location;
+				bIsSnapping = true;
+				CursorSnapping();
+			}
+		}
+		else
+		{
+			FHitResult NewHitResult;
+
+			TArray<TObjectPtr<AActor>> NewActorsToIgnore;
+			NewActorsToIgnore.Add(HitResult.GetActor());
+			
+			UKismetSystemLibrary::SphereTraceSingle(GetWorld(), HitResult.Location, HitResult.Location, 10.f, TraceTypeQuery4,false, NewActorsToIgnore,
+			EDrawDebugTrace::ForOneFrame, NewHitResult, true);
+			
+			if (NewHitResult.bBlockingHit && NewHitResult.GetActor() != HitResult.GetActor())
+			{
+				if (HitRailing = Cast<AWeapon_Railing>(NewHitResult.GetActor()))
+				{
+					SnappingMousePos = NewHitResult.Location;
+					bIsSnapping = true;
+
+					FVector2D NewMouseLoc;
+					if (UGameplayStatics::ProjectWorldToScreen(PlayerController,NewHitResult.ImpactPoint + NewHitResult.GetActor()->GetActorUpVector() * 5.f, NewMouseLoc) && !CurrentAttachment->IsCollidingRailing())
+					{
+						PlayerController->SetMouseLocation(NewMouseLoc.X, NewMouseLoc.Y);
+						CursorSnapping();
+					}
+				}
+			}
+			else
+			{
+				SnappingMousePos = HitResult.Location;
+				bIsSnapping = true;
+				CursorSnapping();
+			}
 		}
 	}
 	// Is not close enough to a rail, keep free roam movement
@@ -183,6 +217,10 @@ void APawn_Smith::CheckForSnapping()
 void APawn_Smith::CursorSnapping()
 {
 	// Init variables
+	FVector Min;
+	FVector Max;
+	HitRailing->RailMesh->GetLocalBounds(Min, Max);
+	
 	FVector NewAttachmentLoc = HitRailing->StartPoint->GetComponentLocation();
 	const float StartY = HitRailing->StartPoint->GetComponentLocation().Y < HitRailing->EndPoint->GetComponentLocation().Y ? HitRailing->StartPoint->GetComponentLocation().Y : HitRailing->EndPoint->GetComponentLocation().Y;
 	const float EndY = HitRailing->StartPoint->GetComponentLocation().Y < HitRailing->EndPoint->GetComponentLocation().Y ? HitRailing->EndPoint->GetComponentLocation().Y : HitRailing->StartPoint->GetComponentLocation().Y;
