@@ -65,7 +65,7 @@ void AAttachment_Base::OnCollRailBeginOverlap(UPrimitiveComponent* OverlappedCom
 	{
 		if (OtherActor != this)
 		{
-			bIsColliding = true;
+			bIsCollidingRailing = true;
 
 			CollidingRails.AddUnique(OtherActor);
 
@@ -84,10 +84,10 @@ void AAttachment_Base::OnCollRailEndOverlap(UPrimitiveComponent* OverlappedCompo
 	{
 		CollidingRails.Remove(OtherActor);
 
-		if (CollidingRails.Num() == 0 && CollidingActors.Num() == 0)
+		if (CollidingRails.Num() == 0)
 		{
-			ToggleDeniedMat(false);
-			bIsColliding = false;
+			bIsCollidingRailing = false;
+			if (CollidingActors.Num() == 0) ToggleDeniedMat(false);
 		}
 	}
 }
@@ -99,7 +99,7 @@ void AAttachment_Base::OnMeshBeginOverlap(UPrimitiveComponent* OverlappedCompone
 	{
 		if (OtherActor != this)
 		{
-			bIsColliding = true;
+			bIsCollidingAttachment = true;
 
 			CollidingActors.AddUnique(OtherComp);
 
@@ -119,10 +119,11 @@ void AAttachment_Base::OnMeshEndOverlap(UPrimitiveComponent* OverlappedComponent
 	{
 		CollidingActors.Remove(OtherComp);
 
-		if (CollidingActors.Num() == 0 && CollidingRails.Num() == 0)
+		if (CollidingActors.Num() == 0)
 		{
-			ToggleDeniedMat(false);
-			bIsColliding = false;
+			bIsCollidingAttachment = false;
+			
+			if (CollidingRails.Num() == 0) ToggleDeniedMat(false);
 		}
 	}
 

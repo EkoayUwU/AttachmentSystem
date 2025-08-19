@@ -46,7 +46,8 @@ public:
 	//==================================================
 	// FUNCTIONS
 	//==================================================
-	bool IsColliding() const {return bIsColliding;}
+	bool IsCollidingAttachment() const {return bIsCollidingAttachment;}
+	bool IsCollidingRailing() const {return bIsCollidingRailing;}
 	
 	virtual void DoAction();
 
@@ -60,7 +61,8 @@ protected:
 	UPROPERTY()
 	TObjectPtr<UMaterialInterface> SavedMaterial;
 
-	bool bIsColliding {false};
+	bool bIsCollidingAttachment {false};
+	bool bIsCollidingRailing {false};
 
 
 	FOnMaterialChanged OnMaterialChanged;

@@ -74,7 +74,7 @@ void APawn_Smith::Tick(float DeltaTime)
 	if (CurrentAttachment) CheckForSnapping();
 
 	// Check for matching railings tags to place Attachment, if not matching, set Attachment materials to denied
-	if (HitRailing && bIsSnapping && CurrentAttachment && !CurrentAttachment->IsColliding())
+	if (HitRailing && bIsSnapping && CurrentAttachment && !CurrentAttachment->IsCollidingAttachment() && !CurrentAttachment->IsCollidingRailing())
 	{
 		for (FGameplayTag Tag : CurrentAttachment->AttachmentTags)
 		{
@@ -91,12 +91,33 @@ void APawn_Smith::Tick(float DeltaTime)
 			bDoOnceMatAttachment = false;
 		}
 	}
-	else if (bDoOnceMatAttachment && !CurrentAttachment->IsColliding())
+	else if (bDoOnceMatAttachment && !CurrentAttachment->IsCollidingAttachment() && !CurrentAttachment->IsCollidingRailing())
 	{
 		CurrentAttachment->ToggleDeniedMat(false);
 		bDoOnceMatAttachment = false;
 	}
 
+
+	if(CurrentAttachment)
+	{
+		if (CurrentAttachment->IsCollidingRailing())
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red, TEXT("Colliding Railing"));
+		}
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Green, TEXT("Not Colliding Railing"));
+		}
+
+		if (CurrentAttachment->IsCollidingAttachment())
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red, TEXT("Colliding Attachment"));
+		}
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Green, TEXT("Not Colliding Attachment"));
+		}
+	}
 }
 
 
@@ -219,7 +240,7 @@ void APawn_Smith::OnInteract(const FInputActionValue& Value)
 	
 	//GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString("Clicked"));
 	
-	if (CurrentAttachment && bCanAttachmentBePlaced && bIsSnapping && !CurrentAttachment->IsColliding())
+	if (CurrentAttachment && bCanAttachmentBePlaced && bIsSnapping && !CurrentAttachment->IsCollidingAttachment() && !CurrentAttachment->IsCollidingRailing())
 	{
 		// Spawn New Actor to attach it to Railing
 		const TObjectPtr<AAttachment_Base> tempNewAttachment = GetWorld()->SpawnActor<AAttachment_Base>(CurrentAttachment->GetClass());
