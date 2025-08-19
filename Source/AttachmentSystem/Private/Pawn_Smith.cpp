@@ -158,6 +158,7 @@ void APawn_Smith::CheckForSnapping()
 	// Line trace to check possible collision with railings
 	UKismetSystemLibrary::SphereTraceSingle(GetWorld(), StartLoc, ValidMousePos, CurrentAttachment->Radius, TraceTypeQuery4,false, ActorsToIgnore,
 		EDrawDebugTrace::ForOneFrame, HitResult, true);
+	
 
 	// Check if Hit is Detected
 	if (HitResult.bBlockingHit)
@@ -293,7 +294,7 @@ void APawn_Smith::OnInteract(const FInputActionValue& Value)
 		CurrentAttachment = nullptr;
 
 		// Swap to 4x Attachment
-		if (!DoOnceChangeAttachment)
+		if (!DoOnceChangeAttachment || true)
 		{
 			DoOnceChangeAttachment = true;
 			

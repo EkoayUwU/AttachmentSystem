@@ -126,7 +126,6 @@ void AAttachment_Base::OnMeshEndOverlap(UPrimitiveComponent* OverlappedComponent
 			if (CollidingRails.Num() == 0) ToggleDeniedMat(false);
 		}
 	}
-
 }
 
 void AAttachment_Base::DoAction()
