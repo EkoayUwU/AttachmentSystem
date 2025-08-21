@@ -180,24 +180,39 @@ void APawn_Smith::CheckForSnapping()
 
 			TArray<TObjectPtr<AActor>> NewActorsToIgnore;
 			NewActorsToIgnore.Add(HitResult.GetActor());
+
+			FVector Min;
+			FVector Max;
+			const TObjectPtr<AWeapon_Railing> tempRailing = Cast<AWeapon_Railing>(HitResult.GetActor());
+
+			tempRailing->RailMesh->GetLocalBounds(Min, Max);
 			
-			UKismetSystemLibrary::SphereTraceSingle(GetWorld(), HitResult.Location, HitResult.Location, 10.f, TraceTypeQuery4,false, NewActorsToIgnore,
+			const float Radius = (Max.Z * tempRailing->GetActorScale3D().Z - Min.Z * tempRailing->GetActorScale3D().Z) / 1.5f ;
+			
+			UKismetSystemLibrary::SphereTraceSingle(GetWorld(), HitResult.ImpactPoint, HitResult.ImpactPoint, Radius, TraceTypeQuery4,false, NewActorsToIgnore,
 			EDrawDebugTrace::ForOneFrame, NewHitResult, true);
-			
-			if (NewHitResult.bBlockingHit && NewHitResult.GetActor() != HitResult.GetActor())
+
+			GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red, TEXT("00"));
+			if (NewHitResult.bBlockingHit) 
 			{
+				GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red, TEXT("01"));
 				if (HitRailing = Cast<AWeapon_Railing>(NewHitResult.GetActor()))
 				{
+					GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red, TEXT("02"));
 					SnappingMousePos = NewHitResult.Location;
 					bIsSnapping = true;
 
 					FVector2D NewMouseLoc;
-					if (UGameplayStatics::ProjectWorldToScreen(PlayerController,NewHitResult.ImpactPoint + NewHitResult.GetActor()->GetActorUpVector() * 5.f, NewMouseLoc) && !CurrentAttachment->IsCollidingRailing())
+					if (UGameplayStatics::ProjectWorldToScreen(PlayerController,NewHitResult.ImpactPoint + NewHitResult.GetActor()->GetActorUpVector() * 5.f,NewMouseLoc))
 					{
+						GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red, TEXT("03"));
 						PlayerController->SetMouseLocation(NewMouseLoc.X, NewMouseLoc.Y);
+
 						CursorSnapping();
 					}
+					
 				}
+					
 			}
 			else
 			{
@@ -242,12 +257,6 @@ void APawn_Smith::CursorSnapping()
 	NewAttachmentLoc.Y = FinalY;
 
 	FRotator NewAttachmentRot = FRotator(HitRailing->GetActorRotation().Pitch, HitRailing->GetActorRotation().Yaw, HitRailing->GetActorRotation().Roll);
-
-	//GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red, NewAttachmentRot.ToString());
-
-	//GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red, FString("Rail Vector : ").Append(HitRailing->GetActorUpVector().ToString()));
-	//GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red, FString("Default Up Vector : ").Append(FVector::UpVector.ToString()));
-	//GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red, FString("DotProduct : ").Append(FString::SanitizeFloat(FVector::DotProduct(HitRailing->GetActorUpVector(), FVector::UpVector))));
 
 	// Force Rotation due to Rotator Limitation if Railing is Upside Down
 	if (FMath::IsNearlyEqual(FVector::DotProduct(HitRailing->GetActorUpVector(), FVector::UpVector), -1.f, 0.1f))
